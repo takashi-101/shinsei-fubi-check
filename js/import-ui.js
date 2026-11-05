@@ -158,6 +158,16 @@
     applyText: applyText,
     importPdfBytes: importPdfBytes,
     markedAttachments: function () { return I.marked; },
+    /** 見本のPDFを取り込む（ボタン1つで試すため）。 */
+    loadSamplePdf: function (caseId) {
+      var c = SFC_SAMPLES.cases.filter(function (x) { return x.id === caseId; })[0];
+      if (!c) return Promise.resolve(0);
+      return App.loadScript('js/sample-pdfs.js').then(function () {
+        if (!App.checkUI.prepareSampleType(c.typeId)) return 0;
+        $('import-card').scrollIntoView({ block: 'start' });
+        return importPdfBytes(base64ToBytes(window.SFC_SAMPLE_PDFS[c.pdf]), c.pdf + '.pdf');
+      }).catch(function (e) { status(e.message, 'bad'); return 0; });
+    },
     text: function () { return I.text; },
     reset: function () {
       I.text = ''; I.lines = []; I.marked = []; I.source = '';
@@ -183,17 +193,6 @@
       // 画面のほかの場所に落としたときに、ブラウザがファイルを開いてしまわないようにする
       window.addEventListener('dragover', function (e) { e.preventDefault(); });
       window.addEventListener('drop', function (e) { e.preventDefault(); });
-
-      var sel = $('sample-pdf');
-      SFC_SAMPLES.cases.forEach(function (c) { sel.appendChild(h('option', { value: c.id }, [c.label + '（PDF）'])); });
-      $('btn-sample-pdf').addEventListener('click', function () {
-        var c = SFC_SAMPLES.cases.filter(function (x) { return x.id === sel.value; })[0];
-        if (!c) { status('見本のPDFを選んでください。', 'warn'); return; }
-        App.loadScript('js/sample-pdfs.js').then(function () {
-          if (!App.checkUI.prepareSampleType(c.typeId)) return;
-          return importPdfBytes(base64ToBytes(window.SFC_SAMPLE_PDFS[c.pdf]), c.pdf + '.pdf');
-        }).catch(function (e) { status(e.message, 'bad'); });
-      });
     }
   };
 })();

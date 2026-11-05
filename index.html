@@ -39,10 +39,8 @@
       <p id="check-empty-settings" class="msg warn" hidden>申請の種類が登録されていません。「確認項目の設定」で登録するか、下の見本で試してください。</p>
       <details id="sample-details">
         <summary>見本で試す（架空のデータ）</summary>
-        <div class="row" style="margin-top:8px">
-          <label class="stack grow">見本<select id="sample-case"></select></label>
-          <button type="button" id="btn-sample-case">見本の値を読み込む</button>
-        </div>
+        <p class="muted">見本の申請の種類（3種類）と、記載漏れのある例・そろっている例を、ボタン1つで試せます。「値を入れる」は申請書の値を入れた状態に、「PDFを取り込む」は見本の申請書PDFから候補を入れる操作を試します。</p>
+        <div id="sample-buttons" class="sample-grid"></div>
       </details>
       <div id="check-msg" class="msg" role="status" aria-live="polite"></div>
     </div>
@@ -58,14 +56,7 @@
           </div>
           <p class="muted">欄名を手がかりに値の候補を入れます。入った値は候補です。申請書と見比べて、直してから確定してください。ファイルはこのPCの中だけで読み、どこにも送りません。</p>
           <!--OCRNOTE-->
-          <details>
-            <summary>見本のPDFで試す（架空の申請書）</summary>
-            <div class="row" style="margin-top:8px">
-              <label class="stack grow">見本のPDF<select id="sample-pdf"><option value="">（見本のPDFを選ぶ）</option></select></label>
-              <button type="button" id="btn-sample-pdf">見本のPDFを取り込む</button>
-            </div>
-            <p class="muted">同じPDFは samples フォルダにもあります。落として試すこともできます。</p>
-          </details>
+          <p class="muted">見本の申請書PDFは samples フォルダにあります（架空のものです）。</p>
           <div id="import-msg" class="msg" role="status" aria-live="polite"></div>
           <div id="import-text-box" hidden>
             <details>
@@ -198,16 +189,41 @@
   <!-- 使い方 -->
   <section id="panel-help" class="panel help" role="tabpanel" aria-label="使い方・データの扱い" hidden>
     <div class="card">
+      <p class="notice-final">最終の判断は職員が行います。このツールは、記載漏れ・書式の誤り・添付書類の不足を受付の時点で見つけるための下確認に使います。</p>
       <h2>使い方</h2>
       <ol>
-        <li>「確認項目の設定」で、申請の種類ごとに必須の欄・書式・添付書類を登録します。まず「見本の設定を読み込む」で架空の見本3種類を入れて、形を確かめられます。</li>
-        <li>設定はJSONで書き出して、係内のほかのPCで読み込めます。</li>
+        <li><strong>確認項目の設定</strong>：申請の種類ごとに、欄（欄名・必須か任意か・書式）と添付書類（必須・条件付き・任意）を登録し、「この申請の種類を保存」を押します。条件付きの添付書類は「どの欄がどの値のとき必要か」を選びます。初めは「見本の設定を読み込む」で架空の見本3種類を入れると、形を確かめられます。</li>
+        <li><strong>確認作業</strong>：申請の種類を選び、申請書を見ながら値を入れ、受け取った添付書類に印を付けて「確認する」を押します。結果は「要確認」「添付不足」「確認済み」に分かれ、要確認には理由が出ます。値を直すと結果もすぐ変わります。</li>
+        <li><strong>PDFから候補を入れる</strong>：文字を選べるPDF（電子申請・パソコンで作った申請書）を「申請書ファイルから候補を入れる」に落とすと、欄名を手がかりに値の候補が黄色で入ります。申請書と見比べ、「この値で確定」か「候補をすべて確定」を押します。未確定の候補は要確認として扱います。</li>
+        <li><strong>画像から読み取る</strong>：スキャンした申請書（PNG・JPEG）も落とせます。手書きの文字は読み取れないことが多く、活字でも読み違いがあります。必ず申請書と見比べてください。</li>
+        <li><strong>AIで候補を補う（任意）</strong>：取り込んだあと、欄名で見つからなかった欄の候補をAIに出させます。既定はこのPCのOllamaです。設定は「確認項目の設定」の画面の下にあります。</li>
+        <li><strong>記録</strong>：「確認結果票を印刷（A4）」で、確認者・審査者の押印欄のある票を印刷します。CSV・JSONでも書き出せます。</li>
       </ol>
+      <h2>書式の種類</h2>
+      <ul>
+        <li>日付：2026/4/1、2026-04-01、令和8年4月1日、R8.4.1 などを読み、存在しない日付（2月30日など）を要確認にします。</li>
+        <li>数字のみ：数字以外の文字を要確認にします。桁数の下限・上限を指定できます。</li>
+        <li>郵便番号：7桁（123-4567 または 1234567）。電話番号：0で始まる10桁か11桁。</li>
+        <li>金額：「1,000,000円」「金500,000円也」などを読みます。下限・上限を指定できます。</li>
+        <li>選択肢：登録した選択肢のどれかであること。</li>
+        <li>記載の有無のみ：氏名・住所など個人情報の欄に使います。値は入れず、記載があるかだけを確認します。</li>
+        <li>全角の数字は半角とみなして確認し、その旨を補足に出します。</li>
+      </ul>
       <h2>データの扱い</h2>
       <ul>
-        <li>このブラウザに保存するのは、確認項目の設定だけです。</li>
+        <li>入力した申請書の内容は、ブラウザに保存しません。画面を閉じると消えます。書き出さずに閉じようとすると確認が出ます。</li>
+        <li>このブラウザに保存するのは、確認項目の設定と、AIの接続先（URLとモデル名）だけです。外部のAPIのキーは保存しません。</li>
+        <li>取り込んだPDF・画像は、このPCの中で読み、どこにも送りません。</li>
+        <li>外部のAPIを選んだときだけ、申請書から取り出した文字が外部へ送られます。送る前に毎回確認が出ます。</li>
         <li>書き出したファイルは、使っている人がPCに保存したものです。取り扱いは各課の規程に従ってください。</li>
       </ul>
+      <h2>Ollamaの設定（AIを使う場合）</h2>
+      <ol>
+        <li>Ollamaを入れ、モデルを入れます（例：<code>ollama pull qwen2.5:7b</code>）。</li>
+        <li>ブラウザからの接続を許すため、環境変数 <code>OLLAMA_ORIGINS</code> を設定してOllamaを起動し直します（Windowsの例：PowerShellで <code>setx OLLAMA_ORIGINS "*"</code>）。</li>
+        <li>「確認項目の設定」の画面の下で、接続先とモデル名を入れ、「接続を試す」を押します。</li>
+        <li>ネットにつながったPCでは、使い終わったら <code>OLLAMA_ORIGINS</code> を元に戻してください（Windowsの例：PowerShellで <code>[Environment]::SetEnvironmentVariable("OLLAMA_ORIGINS", $null, "User")</code> を実行し、Ollamaを起動し直す）。</li>
+      </ol>
     </div>
   </section>
 </main>

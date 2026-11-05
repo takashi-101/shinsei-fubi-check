@@ -281,11 +281,19 @@
 
   /* ---------- 見本 ---------- */
 
-  function renderSampleSelect() {
-    var sel = $('sample-case');
-    sel.textContent = '';
-    sel.appendChild(h('option', { value: '' }, ['（見本を選ぶ）']));
-    SFC_SAMPLES.cases.forEach(function (c) { sel.appendChild(h('option', { value: c.id }, [c.label])); });
+  function renderSampleButtons() {
+    var box = $('sample-buttons');
+    box.textContent = '';
+    SFC_SAMPLES.cases.forEach(function (c) {
+      box.appendChild(h('div', { class: 'sample-row' }, [
+        h('span', { class: 'sample-label', text: c.label }),
+        h('span', { class: 'sample-btns' }, [
+          h('button', { type: 'button', class: 'small', 'data-sample-case': c.id, onclick: function () { loadSampleCase(c.id); } }, ['値を入れる']),
+          h('button', { type: 'button', class: 'small', 'data-sample-pdf': c.id, onclick: function () { App.importUI.loadSamplePdf(c.id); } }, ['PDFを取り込む']),
+          c.image ? h('button', { type: 'button', class: 'small', 'data-sample-image': c.id, onclick: function () { App.ocrUI && App.ocrUI.loadSampleImage(c.id); } }, ['画像を読み取る']) : null
+        ])
+      ]));
+    });
   }
 
   function loadSampleCase(id) {
@@ -332,7 +340,7 @@
     init: function () {
       $('check-date').value = App.today();
       renderTypeSelect();
-      renderSampleSelect();
+      renderSampleButtons();
       $('check-type').addEventListener('change', function (e) {
         var next = e.target.value;
         if (!confirmDiscard('申請の種類を変えると入力が消えます。変えますか。')) { e.target.value = C.type ? C.type.id : ''; return; }
@@ -354,7 +362,6 @@
         Object.keys(C.pending).forEach(function (id) { delete C.pending[id]; });
         render();
       });
-      $('btn-sample-case').addEventListener('click', function () { loadSampleCase($('sample-case').value); });
       $('btn-print').addEventListener('click', function () { App.printSheet(); });
       $('btn-result-csv').addEventListener('click', exportCsv);
       $('btn-result-json').addEventListener('click', exportJson);

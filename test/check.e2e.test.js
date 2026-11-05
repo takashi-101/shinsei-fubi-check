@@ -16,8 +16,7 @@ for (const mode of ['file', 'http']) {
     assert.match(await page.textContent('#panel-check .notice-final'), /最終の判断は職員が行います/);
 
     await page.locator('#sample-details > summary').click();
-    await page.selectOption('#sample-case', 'hojokin-ng');
-    await page.click('#btn-sample-case');
+    await page.click('[data-sample-case=\"hojokin-ng\"]');
     await page.waitForSelector('#count-check');
     const nCheck = Number(await page.textContent('#count-check'));
     const nMissing = Number(await page.textContent('#count-missing'));
@@ -48,8 +47,7 @@ for (const mode of ['file', 'http']) {
     assert.equal(await page.evaluate(() => App.hasUnsaved()), false);
 
     // そろっている例
-    await page.selectOption('#sample-case', 'shomei-ok');
-    await page.click('#btn-sample-case');
+    await page.click('[data-sample-case=\"shomei-ok\"]');
     assert.equal(await page.textContent('#count-check'), '0');
     assert.equal(await page.textContent('#count-missing'), '0');
 
