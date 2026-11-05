@@ -355,6 +355,7 @@
         render();
       });
       $('btn-sample-case').addEventListener('click', function () { loadSampleCase($('sample-case').value); });
+      $('btn-print').addEventListener('click', function () { App.printSheet(); });
       $('btn-result-csv').addEventListener('click', exportCsv);
       $('btn-result-json').addEventListener('click', exportJson);
       App.onSettingsChanged = function () { renderTypeSelect(); if (C.type) render(); };
