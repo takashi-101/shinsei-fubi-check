@@ -49,7 +49,9 @@
     return str(s)
       .replace(/[！-～]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0xFEE0); })
       .replace(/　/g, ' ')
-      .replace(/[‐-―−ーｰ]/g, '-');
+      .replace(/[\u2010-\u2015\u2212]/g, '-')
+      // 長音記号は、数字にはさまれたとき（電話番号・郵便番号の区切り）だけハイフンとみなす
+      .replace(/(\d)[\u30FC\uFF70](?=\d)/g, '$1-');
   }
   function hasFullWidthAlnum(s) { return /[０-９Ａ-Ｚａ-ｚ]/.test(str(s)); }
 
@@ -447,9 +449,9 @@
     var re3 = new RegExp('([0-9]) +(?=' + cjk + ')', 'g');
     return str(text).split(/\r?\n/).map(function (line) {
       var l = line.replace(/[ \t]+/g, ' ').trim();
+      // 見出しと値は欄名で切り分けるので、日本語の文字に接した空白はすべて詰める
       for (var i = 0; i < 2; i++) l = l.replace(re1, '$1');
-      // 見出しと値の間の空白は残したいので、数字の前後は1回だけ詰める
-      l = l.replace(re3, '$1');
+      l = l.replace(re2, '$1').replace(re3, '$1');
       return l;
     }).filter(function (l) { return l !== ''; }).join('\n');
   }
@@ -501,8 +503,8 @@
     var t = str(text);
     var marked = [], present = [];
     field.options.forEach(function (o) {
-      var key = stripSpaces(o).text;
-      var st = stripSpaces(t).text;
+      var key = stripSpaces(toHalf(o)).text;
+      var st = stripSpaces(toHalf(t)).text;
       var idx = st.indexOf(key);
       if (idx < 0) return;
       present.push(o);
@@ -530,6 +532,13 @@
       });
     });
     var normLines = lines.map(function (l) { return toHalf(str(l)).replace(/\t/g, '  '); });
+    var attKeys = t.attachments.map(function (a) { return stripSpaces(toHalf(a.name)).text; }).filter(Boolean);
+    // 次の行を値とみなしてよいか（見出しや添付書類の一覧の行は値にしない）
+    function looksLikeHeading(l) {
+      var st = stripSpaces(l).text;
+      if (/添付|^[■□☑☐✓✔●○◆◇・※]/.test(st)) return true;
+      return attKeys.some(function (k) { return st.indexOf(k) >= 0; });
+    }
     var values = {}, found = {};
     for (var i = 0; i < normLines.length; i++) {
       var line = normLines[i];
@@ -540,7 +549,7 @@
         var end = j + 1 < labels.length ? labels[j + 1].start : line.length;
         var v = cleanValue(line.slice(L.end, end));
         var lineNo = i;
-        if (v === '' && j === labels.length - 1 && i + 1 < normLines.length && findLabels(normLines[i + 1], labelList).length === 0) {
+        if (v === '' && j === labels.length - 1 && i + 1 < normLines.length && findLabels(normLines[i + 1], labelList).length === 0 && !looksLikeHeading(normLines[i + 1])) {
           v = cleanValue(normLines[i + 1]);
           lineNo = i + 1;
         }
