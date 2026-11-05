@@ -15,7 +15,7 @@ for (const mode of ['file', 'http']) {
     assert.equal(await page.isVisible('#panel-check'), true);
     assert.match(await page.textContent('#panel-check .notice-final'), /最終の判断は職員が行います/);
 
-    await page.locator('#panel-check details summary').click();
+    await page.locator('#sample-details > summary').click();
     await page.selectOption('#sample-case', 'hojokin-ng');
     await page.click('#btn-sample-case');
     await page.waitForSelector('#count-check');

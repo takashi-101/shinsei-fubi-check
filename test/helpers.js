@@ -29,6 +29,7 @@ const fileUrl = 'file://' + path.join(ROOT, 'index.html');
 /** ページを開き、外部への通信とエラーを記録する。 */
 async function openPage(browser, url, opts = {}) {
   const context = await browser.newContext(Object.assign({ acceptDownloads: true, viewport: { width: 1280, height: 900 } }, opts));
+  context.setDefaultTimeout(20000);
   const page = await context.newPage();
   const errors = [];
   const external = [];

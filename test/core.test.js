@@ -188,3 +188,71 @@ test('結果のCSV', () => {
   assert.ok(rows.some((x) => x[6] === '委任状' && x[9] === '添付不足'));
   assert.ok(rows.some((x) => x[6] === '窓口に来た方の氏名' && x[8] === '記載あり'));
 });
+
+test('取り込み：欄名を手がかりに候補を作る', () => {
+  const t = SFC.parseSettings({ types: SAMPLES.types }).types[0];
+  const lines = [
+    '小規模事業者 設備導入補助金 交付申請 申請書',
+    '申請年月日（必須）\t令和８年１０月１日',
+    '事業者の区分（必須）\t■法人　□個人事業主',
+    '法人番号\t1234567890123',
+    '事業者の名称（必須）\t株式会社架空製作所',
+    '代表者の氏名（必須）',
+    '所在地の郵便番号（必須）\t123-4567',
+    '所 在 地\t架空県架空市本町',
+    '電話番号：03-1234-5678　　交付申請額 900,000円',
+    '補助事業の名称',
+    '生産ラインの省力化',
+    '添付書類（添付したものに■）',
+    '■ 事業計画書', '□ 経費の見積書', '■履歴事項全部証明書'
+  ];
+  const r = SFC.extractCandidates(t, lines);
+  assert.equal(r.values['h-date'], '令和8年10月1日');
+  assert.equal(r.values['h-kubun'], '法人');
+  assert.equal(r.values['h-hojinno'], '1234567890123');
+  assert.equal(r.values['h-jigyosha'], true);
+  assert.equal(r.values['h-daihyo'], undefined); // 空欄
+  assert.equal(r.values['h-zip'], '123-4567');
+  assert.equal(r.values['h-addr'], true); // 字間の空いた欄名
+  assert.equal(r.values['h-tel'], '03-1234-5678');
+  assert.equal(r.values['h-shinsei'], '900,000円'); // 1行に2つの欄
+  assert.equal(r.values['h-jigyomei'], '生産ラインの省力化'); // 次の行の値
+  assert.deepEqual(r.attachmentsMarked.sort(), ['h-a1', 'h-a3']);
+});
+
+test('取り込み：選択肢に印がないときは候補を入れない', () => {
+  const t = SFC.parseSettings({ types: SAMPLES.types }).types[0];
+  const r = SFC.extractCandidates(t, ['事業者の区分\t□法人　□個人事業主']);
+  assert.equal(r.values['h-kubun'], undefined);
+});
+
+test('読み取り結果の空白を詰める', () => {
+  assert.equal(SFC.tidyOcrText('申請 年 月 日 令 和 8 年 10 月 1 日'), '申請年月日令和8年10月1日');
+  assert.equal(SFC.tidyOcrText('郵便 番号 123-4567\n\n電話 03 1234 5678'), '郵便番号123-4567\n電話03 1234 5678');
+});
+
+test('PDFの文字の部品を行にまとめる', () => {
+  const it = (s, x, y, w) => ({ str: s, transform: [10, 0, 0, 10, x, y], width: w, height: 10 });
+  const lines = SFC.itemsToLines([it('値A', 230, 700, 20), it('欄A', 56, 700, 20), it('欄B', 56, 674, 20), it('値B', 230, 674.5, 20)]);
+  assert.deepEqual(lines, ['欄A\t値A', '欄B\t値B']);
+});
+
+test('AIの返事から候補を取り出す（形の合わないものは捨てる）', () => {
+  const t = SFC.parseSettings({ types: SAMPLES.types }).types[0];
+  const msgs = SFC.buildAiMessages(t, '申請書の文字', ['h-date', 'h-kubun']);
+  assert.equal(msgs.length, 2);
+  assert.match(msgs[1].content, /申請年月日/);
+  assert.doesNotMatch(msgs[1].content, /交付申請額/);
+  const c = SFC.parseAiAnswer(t, '```json\n{"申請年月日":"令和8年10月1日","事業者の区分":"会社","代表者の氏名":"記載あり","交付申請額":""}\n```');
+  assert.equal(c['h-date'], '令和8年10月1日');
+  assert.equal(c['h-kubun'], undefined);
+  assert.equal(c['h-daihyo'], true);
+  assert.equal(c['h-shinsei'], undefined);
+  assert.deepEqual(SFC.parseAiAnswer(t, '{"申請年月日":"x"}', ['h-kubun']), {});
+  assert.throws(() => SFC.parseAiAnswer(t, 'わかりません'), /JSON/);
+});
+
+test('長音記号は数字の間だけハイフンにする', () => {
+  assert.equal(SFC.toHalf('多目的ホール'), '多目的ホール');
+  assert.equal(SFC.toHalf('０３ー１２３４ー５６７８'), '03-1234-5678');
+});

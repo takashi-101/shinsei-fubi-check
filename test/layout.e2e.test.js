@@ -20,7 +20,7 @@ for (const width of [375, 1280]) {
       for (const tab of tabs) {
         await page.click(`[data-tab="${tab}"]`);
         if (tab === 'check' && await page.$('#sample-case')) {
-          await page.locator('#panel-check details summary').click();
+          await page.locator('#sample-details > summary').click();
           await page.selectOption('#sample-case', { index: 1 });
           await page.click('#btn-sample-case');
           await page.click('#btn-check');

@@ -34,6 +34,8 @@
     });
     App.settingsUI.init();
     if (App.checkUI) App.checkUI.init();
+    if (App.importUI) App.importUI.init();
+    if (App.ocrUI) App.ocrUI.init();
     if (App.aiUI) App.aiUI.init();
     showTab(document.querySelector('.tabs [role="tab"]').dataset.tab);
     window.addEventListener('beforeunload', function (e) {

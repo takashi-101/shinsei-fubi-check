@@ -316,6 +316,18 @@
     meta: meta,
     setOutputDone: function () { C.outputDone = true; },
     rerender: render,
+    /** 見本のPDF・画像で試すときに、見本の申請の種類を選んだ状態にする。 */
+    prepareSampleType: function (typeId) {
+      if (!confirmDiscard('見本を読み込んでよいですか。')) return false;
+      var t = App.settingsUI.ensureSampleType(typeId);
+      if (!t) { msg('見本の申請の種類と同じ名前の設定がすでにあり、内容が違うため読み込めません。', 'bad'); return false; }
+      renderTypeSelect();
+      clearInput();
+      C.type = t;
+      $('check-type').value = t.id;
+      render();
+      return true;
+    },
     msg: msg,
     init: function () {
       $('check-date').value = App.today();

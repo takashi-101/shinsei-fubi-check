@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>申請書類 記載漏れ・添付漏れ確認ツール</title>
+<script>window.APP_VERSION = '20261105-1';</script>
 <link rel="stylesheet" href="css/style.css?v=20261105-1">
 </head>
 <body>
@@ -36,7 +37,7 @@
         <datalist id="role-list"><option value="受付"><option value="一次審査"><option value="二次審査"></datalist>
       </div>
       <p id="check-empty-settings" class="msg warn" hidden>申請の種類が登録されていません。「確認項目の設定」で登録するか、下の見本で試してください。</p>
-      <details>
+      <details id="sample-details">
         <summary>見本で試す（架空のデータ）</summary>
         <div class="row" style="margin-top:8px">
           <label class="stack grow">見本<select id="sample-case"></select></label>
@@ -48,7 +49,35 @@
 
     <div class="check-layout">
       <div id="check-work" hidden>
-        <!--IMPORT-->
+        <div class="card" id="import-card">
+          <h2>申請書ファイルから候補を入れる（任意）</h2>
+          <div id="dropzone" class="dropzone">
+            <p>文字を選べるPDF（電子申請・パソコンで作った申請書）を、ここに落としてください。<span id="dz-image-note" hidden>スキャン画像（PNG・JPEG）も読み取れます。</span></p>
+            <label class="btn" for="import-file">ファイルを選ぶ</label>
+            <input type="file" id="import-file" accept=".pdf,application/pdf,.png,.jpg,.jpeg,image/png,image/jpeg" class="sr-only">
+          </div>
+          <p class="muted">欄名を手がかりに値の候補を入れます。入った値は候補です。申請書と見比べて、直してから確定してください。ファイルはこのPCの中だけで読み、どこにも送りません。</p>
+          <!--OCRNOTE-->
+          <details>
+            <summary>見本のPDFで試す（架空の申請書）</summary>
+            <div class="row" style="margin-top:8px">
+              <label class="stack grow">見本のPDF<select id="sample-pdf"><option value="">（見本のPDFを選ぶ）</option></select></label>
+              <button type="button" id="btn-sample-pdf">見本のPDFを取り込む</button>
+            </div>
+            <p class="muted">同じPDFは samples フォルダにもあります。落として試すこともできます。</p>
+          </details>
+          <div id="import-msg" class="msg" role="status" aria-live="polite"></div>
+          <div id="import-text-box" hidden>
+            <details>
+              <summary>取り出した文字を見る</summary>
+              <pre id="import-text" class="extracted"></pre>
+            </details>
+          </div>
+          <div class="btns">
+            <button type="button" id="btn-ai" disabled>AIで候補を補う（見つからなかった欄）</button>
+          </div>
+          <div id="ai-msg" class="msg" role="status" aria-live="polite"></div>
+        </div>
         <div class="card">
           <h2>申請書の記載</h2>
           <p class="muted">申請書を見ながら値を入れてください。氏名・住所などは値を入れず「記載あり」に印を付けます。</p>
@@ -132,6 +161,38 @@
         </div>
       </div>
     </div>
+
+    <div class="card" id="ai-settings">
+      <h2>AIの接続（任意）</h2>
+      <p>取り込んだ申請書の文字から、欄名で見つからなかった値の候補をAIに出させます。AIの出力は候補として入るだけで、確定は職員が行います。AIを使わなくても、ほかの機能はすべて使えます。</p>
+      <div class="row">
+        <label class="stack grow">AIの使い方
+          <select id="ai-mode">
+            <option value="ollama">このPCのOllamaを使う（既定）</option>
+            <option value="api">外部のAPI（OpenAI互換）を使う</option>
+            <option value="off">AIを使わない</option>
+          </select>
+        </label>
+      </div>
+      <div id="ai-ollama-box">
+        <div class="row">
+          <label class="stack grow">Ollamaの接続先<input type="url" id="ai-ollama-url" autocomplete="off"></label>
+          <label class="stack grow">モデル名<input type="text" id="ai-ollama-model" list="ollama-models" autocomplete="off" placeholder="例：qwen2.5:7b"></label>
+          <datalist id="ollama-models"></datalist>
+          <button type="button" id="btn-ai-test">接続を試す</button>
+        </div>
+        <p class="muted">Ollamaは、このPCの中で動くAIです。申請書の文字はPCの外に出ません。設定の手順は「使い方・データの扱い」にあります。</p>
+      </div>
+      <div id="ai-api-box" hidden>
+        <p class="msg warn">外部のAPIを使うと、申請書から取り出した文字（個人情報を含む）が外部へ送られます。所属の規程で認められている場合だけ使ってください。送る前に毎回確認が出ます。</p>
+        <div class="row">
+          <label class="stack grow">接続先（例：https://api.example.com/v1）<input type="url" id="ai-api-url" autocomplete="off"></label>
+          <label class="stack grow">モデル名<input type="text" id="ai-api-model" autocomplete="off"></label>
+          <label class="stack grow">APIキー（保存しません）<input type="password" id="ai-api-key" autocomplete="off"></label>
+        </div>
+      </div>
+      <div id="ai-settings-msg" class="msg" role="status" aria-live="polite"></div>
+    </div>
   </section>
 
   <!-- 使い方 -->
@@ -158,6 +219,8 @@
 <script src="js/store.js?v=20261105-1"></script>
 <script src="js/settings-ui.js?v=20261105-1"></script>
 <script src="js/check-ui.js?v=20261105-1"></script>
+<script src="js/import-ui.js?v=20261105-1"></script>
+<script src="js/ai.js?v=20261105-1"></script>
 <script src="js/app.js?v=20261105-1"></script>
 </body>
 </html>
