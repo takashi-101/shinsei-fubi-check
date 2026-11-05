@@ -294,3 +294,7 @@ pre { background: var(--surface-2); padding: 8px; border-radius: 6px; overflow-x
 .sheet .stamps .s-box { height: 22mm; }
 .sheet tr { break-inside: avoid; }
 .sheet .foot { font-size: 8.5pt; margin-top: 3mm; }
+
+@media (min-width: 861px) {
+  #check-result-card { position: sticky; top: 8px; max-height: calc(100vh - 16px); overflow: auto; }
+}

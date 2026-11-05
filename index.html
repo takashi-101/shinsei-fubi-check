@@ -12,12 +12,76 @@
   <h1>申請書類 記載漏れ・添付漏れ確認ツール</h1>
   <p class="lead">受け付けた申請書の記載漏れ・書式の誤り・添付書類の不足を、受付の時点で下確認します。入力した申請書の内容はこのPCの外に出ず、画面を閉じると消えます。</p>
   <nav class="tabs" role="tablist" aria-label="画面の切り替え">
+    <button type="button" role="tab" data-tab="check" aria-controls="panel-check">確認作業</button>
     <button type="button" role="tab" data-tab="settings" aria-controls="panel-settings">確認項目の設定</button>
     <button type="button" role="tab" data-tab="help" aria-controls="panel-help">使い方・データの扱い</button>
   </nav>
 </header>
 
 <main>
+  <!-- 確認作業 -->
+  <section id="panel-check" class="panel" role="tabpanel" aria-label="確認作業">
+    <p class="notice-final">最終の判断は職員が行います。このツールの結果は、記載漏れ・添付漏れを見つけるための下確認です。</p>
+
+    <div class="card">
+      <h2>受付の情報</h2>
+      <div class="row">
+        <label class="stack grow">申請の種類<select id="check-type"></select></label>
+        <label class="stack">確認日<input type="date" id="check-date"></label>
+        <label class="stack">受付番号（任意）<input type="text" id="check-receipt" autocomplete="off"></label>
+      </div>
+      <div class="row">
+        <label class="stack grow">担当係（例：市民課 受付係）<input type="text" id="check-section" autocomplete="off"></label>
+        <label class="stack grow">役割（例：受付、一次審査）<input type="text" id="check-role" autocomplete="off" list="role-list"></label>
+        <datalist id="role-list"><option value="受付"><option value="一次審査"><option value="二次審査"></datalist>
+      </div>
+      <p id="check-empty-settings" class="msg warn" hidden>申請の種類が登録されていません。「確認項目の設定」で登録するか、下の見本で試してください。</p>
+      <details>
+        <summary>見本で試す（架空のデータ）</summary>
+        <div class="row" style="margin-top:8px">
+          <label class="stack grow">見本<select id="sample-case"></select></label>
+          <button type="button" id="btn-sample-case">見本の値を読み込む</button>
+        </div>
+      </details>
+      <div id="check-msg" class="msg" role="status" aria-live="polite"></div>
+    </div>
+
+    <div class="check-layout">
+      <div id="check-work" hidden>
+        <!--IMPORT-->
+        <div class="card">
+          <h2>申請書の記載</h2>
+          <p class="muted">申請書を見ながら値を入れてください。氏名・住所などは値を入れず「記載あり」に印を付けます。</p>
+          <div id="cand-all" class="msg warn" hidden>取り込んだ候補が未確定です。申請書の現物と見比べて確定してください。
+            <button type="button" id="btn-cand-all" class="small">候補をすべて確定</button></div>
+          <div id="check-fields"></div>
+        </div>
+        <div class="card">
+          <h2>添付書類（受領したものに印）</h2>
+          <div id="check-atts"></div>
+        </div>
+        <div class="btns">
+          <button type="button" id="btn-check" class="primary">確認する</button>
+          <button type="button" id="btn-clear" class="danger">入力を消す</button>
+        </div>
+      </div>
+
+      <div id="check-result-card" class="card" hidden>
+        <h2>確認の結果</h2>
+        <div id="check-result"><p class="empty-note">「確認する」を押すと、ここに結果が出ます。</p></div>
+        <div id="check-outputs" hidden>
+          <p class="notice-final">最終の判断は職員が行います。</p>
+          <div class="btns">
+            <!--PRINT-->
+            <button type="button" id="btn-result-csv">結果をCSVで書き出す</button>
+            <button type="button" id="btn-result-json">結果をJSONで書き出す</button>
+          </div>
+          <p class="muted">申請書の内容は保存されません。記録が要るときは、確認結果票を印刷するか書き出してください。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- 確認項目の設定 -->
   <section id="panel-settings" class="panel" role="tabpanel" aria-label="確認項目の設定">
     <div class="card">
@@ -93,6 +157,7 @@
 <script src="js/samples.js?v=20261105-1"></script>
 <script src="js/store.js?v=20261105-1"></script>
 <script src="js/settings-ui.js?v=20261105-1"></script>
+<script src="js/check-ui.js?v=20261105-1"></script>
 <script src="js/app.js?v=20261105-1"></script>
 </body>
 </html>

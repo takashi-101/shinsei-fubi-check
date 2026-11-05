@@ -122,3 +122,69 @@ test('CSV：BOM付き・CRLF・引用符・数式にならない', () => {
   assert.equal(rows[0][0], '申請の種類');
   assert.ok(rows.some((r) => r[7] && r[7].includes('「事業者の区分」が「法人」のとき必要')));
 });
+
+test('判定：見本の「記載漏れのある例」と「そろっている例」', () => {
+  const settings = SFC.parseSettings({ types: SAMPLES.types });
+  for (const c of SAMPLES.cases) {
+    const t = settings.types.find((x) => x.id === c.typeId);
+    const r = SFC.evaluate(t, { values: c.values, received: c.received });
+    if (c.id.endsWith('-ok')) {
+      assert.equal(r.counts.check, 0, c.id + ' ' + JSON.stringify(r.fields.filter((f) => f.group === 'check')));
+      assert.equal(r.counts.missing, 0, c.id);
+    } else {
+      assert.ok(r.counts.check + r.counts.missing > 0, c.id);
+    }
+  }
+});
+
+test('判定：補助金の記載漏れの理由', () => {
+  const settings = SFC.parseSettings({ types: SAMPLES.types });
+  const c = SAMPLES.cases.find((x) => x.id === 'hojokin-ng');
+  const t = settings.types.find((x) => x.id === c.typeId);
+  const r = SFC.evaluate(t, { values: c.values, received: c.received });
+  const by = Object.fromEntries(r.fields.map((f) => [f.name, f]));
+  assert.equal(by['法人番号'].group, 'ok');
+  assert.match(by['法人番号'].note, /全角/);
+  assert.match(by['代表者の氏名'].reason, /未記入/);
+  assert.match(by['所在地の郵便番号'].reason, /7桁/);
+  assert.match(by['電話番号'].reason, /9桁/);
+  assert.match(by['交付申請額'].reason, /上限/);
+  assert.match(by['事業の完了予定日'].reason, /未記入/);
+  const att = Object.fromEntries(r.attachments.map((a) => [a.name, a]));
+  assert.equal(att['履歴事項全部証明書'].group, 'missing');
+  assert.equal(att['開業届の写し'].status, 'notNeeded');
+  assert.equal(att['誓約書'].group, 'missing');
+});
+
+test('判定：条件の欄が未記入なら条件付きの添付書類は要確認、候補は未確定なら要確認', () => {
+  const t = SFC.parseSettings({ types: SAMPLES.types }).types[0];
+  const r = SFC.evaluate(t, { values: {}, received: {} });
+  const a = r.attachments.find((x) => x.name === '履歴事項全部証明書');
+  assert.equal(a.group, 'check');
+  assert.match(a.reason, /判断できません/);
+  const r2 = SFC.evaluate(t, { values: { 'h-date': '2026/1/5' }, pending: { 'h-date': 'PDF' } });
+  const d = r2.fields.find((x) => x.id === 'h-date');
+  assert.equal(d.group, 'check');
+  assert.match(d.reason, /PDFの候補のまま/);
+  // 条件「以外」と「記入があるとき」
+  const t2 = SFC.normalizeType({ name: 'x', fields: [{ id: 'k', name: 'k', format: 'text' }], attachments: [
+    { id: 'a', name: 'A', need: 'conditional', cond: { fieldId: 'k', op: 'filled' } },
+    { id: 'b', name: 'B', need: 'conditional', cond: { fieldId: 'k', op: 'notEquals', values: ['x'] } }] });
+  const r3 = SFC.evaluate(t2, { values: { k: 'y' } });
+  assert.equal(r3.attachments[0].group, 'missing');
+  assert.equal(r3.attachments[1].group, 'missing');
+  const r4 = SFC.evaluate(t2, { values: { k: 'x' }, received: { a: true } });
+  assert.equal(r4.attachments[0].group, 'ok');
+  assert.equal(r4.attachments[1].status, 'notNeeded');
+});
+
+test('結果のCSV', () => {
+  const settings = SFC.parseSettings({ types: SAMPLES.types });
+  const c = SAMPLES.cases.find((x) => x.id === 'shomei-ng');
+  const t = settings.types.find((x) => x.id === c.typeId);
+  const r = SFC.evaluate(t, { values: c.values, received: c.received });
+  const rows = SFC.resultToRows(t, r, { date: '2026-11-05', section: '市民課 証明係', role: '受付' });
+  assert.equal(rows.length, 1 + t.fields.length + t.attachments.length);
+  assert.ok(rows.some((x) => x[6] === '委任状' && x[9] === '添付不足'));
+  assert.ok(rows.some((x) => x[6] === '窓口に来た方の氏名' && x[8] === '記載あり'));
+});

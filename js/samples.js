@@ -91,7 +91,7 @@
     {
       id: 'hojokin-ng', typeId: 'sample-hojokin', label: '補助金の交付申請：記載漏れのある例', pdf: 'hojokin-ng',
       values: {
-        'h-date': '令和8年10月1日', 'h-kubun': '法人', 'h-hojinno': '１２３４５６７８９０１２', 'h-jigyosha': true, 'h-daihyo': false,
+        'h-date': '令和8年10月1日', 'h-kubun': '法人', 'h-hojinno': '１２３４５６７８９０１２３', 'h-jigyosha': true, 'h-daihyo': false,
         'h-zip': '123-456', 'h-addr': true, 'h-tel': '03-1234-567', 'h-jigyomei': '生産ラインの省力化設備の導入',
         'h-sogaku': '1,800,000円', 'h-shinsei': '1,200,000円', 'h-kanryo': ''
       },
