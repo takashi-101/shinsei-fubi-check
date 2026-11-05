@@ -34,6 +34,8 @@ test('READMEの決まりごと', () => {
   const lines = md.split('\n');
   assert.match(lines.slice(0, 5).join('\n'), /https:\/\/takashi-101\.github\.io\/shinsei-fubi-check\//);
   assert.match(md, /OLLAMA_ORIGINS/);
+  assert.match(md, /lms server start --cors/);
+  assert.match(md, /localhost:1234\/v1/);
   assert.match(md, /使い終わったら/);
   for (const ng of ['三層分離', 'マイナンバー利用事務系', '適合', '削減率', 'Claude', 'AIで作成']) assert.ok(!md.includes(ng), 'READMEに「' + ng + '」がある');
   for (const s of ['pdf.js', 'tesseract.js-core', '日本語の学習データ', 'Apache License 2.0']) assert.ok(md.includes(s), s);
