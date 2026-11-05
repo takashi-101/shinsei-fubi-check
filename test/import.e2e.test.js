@@ -76,7 +76,10 @@ test('AI：Ollama（仮の応答）で空いた欄に候補が入る・つなが
   const ai = await startMockAi((req) => ({ '事業の完了予定日': '令和9年2月26日', '代表者の氏名': '記載あり', '交付申請額': '999円' }));
   const { context, page, errors } = await openPage(browser, fileUrl);
   await page.click('[data-tab="settings"]');
-  assert.equal(await page.inputValue('#ai-mode'), 'ollama');
+  // 既定はこのPCのLM Studio（OpenAI互換の窓口）
+  assert.equal(await page.inputValue('#ai-mode'), 'api');
+  assert.equal(await page.inputValue('#ai-api-url'), 'http://localhost:1234/v1');
+  await page.selectOption('#ai-mode', 'ollama');
   assert.equal(await page.inputValue('#ai-ollama-url'), 'http://localhost:11434');
   await page.fill('#ai-ollama-url', ai.url);
   await page.click('#btn-ai-test');
@@ -119,12 +122,46 @@ test('AI：Ollama（仮の応答）で空いた欄に候補が入る・つなが
   await context.close();
 });
 
+test('AI：既定のLM Studio（OpenAI互換・仮の応答）は確認なし・キーなしで送る', async () => {
+  const ai = await startMockAi(() => ({ '事業の完了予定日': '令和9年3月2日' }));
+  const { context, page, errors } = await openPage(browser, fileUrl);
+  await page.click('[data-tab="settings"]');
+  assert.equal(await page.inputValue('#ai-mode'), 'api');
+  assert.equal(await page.isVisible('#ai-api-local-note'), true);
+  assert.equal(await page.isVisible('#ai-api-external-note'), false);
+  await page.fill('#ai-api-url', ai.url + '/v1');
+  await page.click('#btn-ai-api-test');
+  await page.waitForFunction(() => /mock-model/.test(document.querySelector('#ai-settings-msg').textContent));
+  await page.fill('#ai-api-model', 'mock-model');
+  await page.click('[data-tab="check"]');
+  await page.locator('#sample-details > summary').click();
+  await page.click('[data-sample-case=\"hojokin-ng\"]');
+  await page.click('#btn-clear');
+  await page.click('[data-sample-pdf="hojokin-ng"]');
+  await page.waitForFunction(() => /候補を入れました/.test(document.querySelector('#import-msg').textContent), null, { timeout: 30000 });
+  page._dialogs = [];
+  await page.click('#btn-ai');
+  await page.waitForFunction(() => /AIの候補を/.test(document.querySelector('#ai-msg').textContent));
+  assert.equal(page._dialogs.length, 0, 'このPCの中の接続先では、送信の確認を出さない');
+  assert.equal(await page.inputValue('#in-h-kanryo'), '令和9年3月2日');
+  const req = ai.log.find((l) => l.url === '/v1/chat/completions');
+  assert.equal(req.auth, '', 'キーを送らない');
+  assert.equal(req.body.model, 'mock-model');
+  ai.srv.close();
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 test('AI：外部のAPI（OpenAI互換・仮の応答）は確認のうえ送り、キーは保存しない', async () => {
   const ai = await startMockAi(() => ({ '事業の完了予定日': '令和9年3月1日' }));
   const { context, page, errors } = await openPage(browser, fileUrl);
+  // 仮のサーバーはこのPCの中にあるため、外部の接続先として扱わせる
+  await page.addInitScript(() => { window.__treatAsExternal = true; });
+  await page.reload();
   await page.click('[data-tab="settings"]');
   await page.selectOption('#ai-mode', 'api');
   await page.fill('#ai-api-url', ai.url + '/v1');
+  assert.equal(await page.isVisible('#ai-api-external-note'), true);
   await page.fill('#ai-api-model', 'mock-model');
   await page.fill('#ai-api-key', 'test-key-123');
   await page.click('[data-tab="check"]');
