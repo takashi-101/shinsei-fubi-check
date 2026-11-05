@@ -19,10 +19,9 @@ for (const width of [375, 1280]) {
       const tabs = await page.$$eval('.tabs [role="tab"]', (els) => els.map((e) => e.dataset.tab));
       for (const tab of tabs) {
         await page.click(`[data-tab="${tab}"]`);
-        if (tab === 'check' && await page.$('#sample-case')) {
+        if (tab === 'check' && await page.$('#sample-buttons')) {
           await page.locator('#sample-details > summary').click();
-          await page.selectOption('#sample-case', { index: 1 });
-          await page.click('#btn-sample-case');
+          await page.click('[data-sample-case="hojokin-ng"]');
           await page.click('#btn-check');
         }
         const over = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

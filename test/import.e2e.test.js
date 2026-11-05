@@ -10,24 +10,13 @@ let browser, server;
 test.before(async () => { browser = await chromium.launch(); server = await startServer(); });
 test.after(async () => { await browser.close(); server.srv.close(); });
 
-async function openImport(page) {
-  await page.locator('#import-card > details > summary').click();
-}
 
 for (const mode of ['file', 'http']) {
   test(`PDF取り込み：見本PDF6件の候補が見本の値と合う（${mode}）`, async () => {
     const { context, page, errors, external } = await openPage(browser, mode === 'file' ? fileUrl : server.url);
     for (const c of SAMPLES.cases) {
-      // 見本のPDFの select は申請の種類を選ぶ前は隠れているので、種類を選んでから
-      if (!(await page.isVisible('#import-card'))) {
-        await page.click('[data-tab="settings"]');
-        await page.click('#btn-load-samples');
-        await page.click('[data-tab="check"]');
-        await page.selectOption('#check-type', c.typeId);
-        await openImport(page);
-      }
-      await page.selectOption('#sample-pdf', c.id);
-      await page.click('#btn-sample-pdf');
+      if (!(await page.isVisible('#sample-buttons'))) await page.locator('#sample-details > summary').click();
+      await page.click(`[data-sample-pdf=\"${c.id}\"]`);
       await page.waitForFunction(() => /候補を入れました|取り出せません|読めません/.test(document.querySelector('#import-msg').textContent), null, { timeout: 30000 });
       const msg = await page.textContent('#import-msg');
       assert.match(msg, /PDFから \d+欄に候補を入れました/, msg);
@@ -65,8 +54,7 @@ for (const mode of ['file', 'http']) {
 test('PDF取り込み：フォントを埋め込まないPDF（文字コード対応表が要る）と、ファイルを落とす操作', async () => {
   const { context, page, errors } = await openPage(browser, fileUrl);
   await page.locator('#sample-details > summary').click();
-  await page.selectOption('#sample-case', 'shomei-ok');
-  await page.click('#btn-sample-case');
+  await page.click('[data-sample-case=\"shomei-ok\"]');
   await page.click('#btn-clear');
   await page.setInputFiles('#import-file', path.join(ROOT, 'test/fixtures/cid-font.pdf'));
   await page.waitForFunction(() => /候補を入れました/.test(document.querySelector('#import-msg').textContent), null, { timeout: 30000 });
@@ -96,12 +84,9 @@ test('AI：Ollama（仮の応答）で空いた欄に候補が入る・つなが
   await page.fill('#ai-ollama-model', 'mock-model:latest');
   await page.click('[data-tab="check"]');
   await page.locator('#sample-details > summary').click();
-  await page.selectOption('#sample-case', 'hojokin-ng');
-  await page.click('#btn-sample-case');
+  await page.click('[data-sample-case=\"hojokin-ng\"]');
   await page.click('#btn-clear');
-  await openImport(page);
-  await page.selectOption('#sample-pdf', 'hojokin-ng');
-  await page.click('#btn-sample-pdf');
+  await page.click(`[data-sample-pdf=\"${'hojokin-ng'}\"]`);
   await page.waitForFunction(() => /候補を入れました/.test(document.querySelector('#import-msg').textContent), null, { timeout: 30000 });
   const before = await page.inputValue('#in-h-shinsei');
   await page.click('#btn-ai');
@@ -123,7 +108,7 @@ test('AI：Ollama（仮の応答）で空いた欄に候補が入る・つなが
   // つながらないとき
   ai.srv.close();
   await page.click('#btn-clear');
-  await page.click('#btn-sample-pdf');
+  await page.click('[data-sample-pdf="hojokin-ng"]');
   await page.waitForFunction(() => /候補を入れました/.test(document.querySelector('#import-msg').textContent), null, { timeout: 30000 });
   await page.click('#btn-ai');
   await page.waitForFunction(() => /出せませんでした/.test(document.querySelector('#ai-msg').textContent), null, { timeout: 30000 });
@@ -144,12 +129,9 @@ test('AI：外部のAPI（OpenAI互換・仮の応答）は確認のうえ送り
   await page.fill('#ai-api-key', 'test-key-123');
   await page.click('[data-tab="check"]');
   await page.locator('#sample-details > summary').click();
-  await page.selectOption('#sample-case', 'hojokin-ng');
-  await page.click('#btn-sample-case');
+  await page.click('[data-sample-case=\"hojokin-ng\"]');
   await page.click('#btn-clear');
-  await openImport(page);
-  await page.selectOption('#sample-pdf', 'hojokin-ng');
-  await page.click('#btn-sample-pdf');
+  await page.click(`[data-sample-pdf=\"${'hojokin-ng'}\"]`);
   await page.waitForFunction(() => /候補を入れました/.test(document.querySelector('#import-msg').textContent), null, { timeout: 30000 });
   page._dialogs = [];
   await page.click('#btn-ai');

@@ -13,8 +13,7 @@ test('確認結果票：必要な項目がそろい、A4で印刷できる', asy
   const { context, page, errors } = await openPage(browser, fileUrl);
   await page.evaluate(() => { window.__printed = 0; window.print = () => { window.__printed++; }; });
   await page.locator('#sample-details > summary').click();
-  await page.selectOption('#sample-case', 'shomei-ng');
-  await page.click('#btn-sample-case');
+  await page.click('[data-sample-case=\"shomei-ng\"]');
   await page.fill('#check-section', '市民課 証明係');
   await page.fill('#check-role', '受付');
   await page.fill('#check-receipt', 'R8-0123');
@@ -39,8 +38,7 @@ test('確認結果票：必要な項目がそろい、A4で印刷できる', asy
   assert.ok(/MediaBox\s*\[0 0 59[45]/.test(pdf), "A4ではない");
   // 欄の多い見本（補助金・記載漏れのある例）でも1枚に収まる
   await page.emulateMedia({ media: 'screen' });
-  await page.selectOption('#sample-case', 'hojokin-ng');
-  await page.click('#btn-sample-case');
+  await page.click('[data-sample-case=\"hojokin-ng\"]');
   await page.click('#btn-print');
   await page.emulateMedia({ media: 'print' });
   const out2 = out.replace(/sheet\.pdf$/, 'sheet2.pdf');
