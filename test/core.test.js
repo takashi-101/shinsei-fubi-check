@@ -256,3 +256,25 @@ test('長音記号は数字の間だけハイフンにする', () => {
   assert.equal(SFC.toHalf('多目的ホール'), '多目的ホール');
   assert.equal(SFC.toHalf('０３ー１２３４ー５６７８'), '03-1234-5678');
 });
+
+test('画像の読み取り結果：■の読み違いと桁区切りの空白', () => {
+  const t = SFC.parseSettings({ types: SAMPLES.types }).types[0];
+  const lines = SFC.tidyOcrText('事業者の区分 (必須 ) 画法人口個人事業主\n補助事業に要する経費(必須) 1, 800, 000円').split('\n');
+  const r = SFC.extractCandidates(t, lines, { ocr: true });
+  assert.equal(r.values['h-kubun'], '法人');
+  assert.equal(r.values['h-sogaku'], '1,800,000円');
+  // PDFの文字では「画」を印とみなさない
+  assert.equal(SFC.extractCandidates(t, lines).values['h-kubun'], undefined);
+});
+
+test('画像の前処理：長い罫線は消し、文字の短い線は残す', () => {
+  const w = 200, h = 100;
+  const g = new Uint8Array(w * h).fill(255);
+  for (let x = 10; x < 190; x++) g[50 * w + x] = 0;      // 横の罫線
+  for (let y = 5; y < 95; y++) g[y * w + 100] = 0;       // 縦の罫線
+  for (let x = 20; x < 30; x++) g[20 * w + x] = 0;       // 文字の線（短い）
+  SFC.removeRuledLines(g, w, h);
+  assert.equal(g[50 * w + 60], 255);
+  assert.equal(g[70 * w + 100], 255);
+  assert.equal(g[20 * w + 25], 0);
+});

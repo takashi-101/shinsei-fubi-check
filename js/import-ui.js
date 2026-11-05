@@ -103,7 +103,7 @@
     pre.textContent = I.text;
     $('import-text-box').hidden = I.text === '';
     $('btn-ai').disabled = I.text === '';
-    var r = SFC.extractCandidates(t, lines);
+    var r = SFC.extractCandidates(t, lines, { ocr: source !== 'PDF' });
     I.marked = r.attachmentsMarked;
     var n = App.checkUI.applyCandidates(r.values, source, false);
     var total = t.fields.length;
