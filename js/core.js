@@ -452,6 +452,8 @@
       // 見出しと値は欄名で切り分けるので、日本語の文字に接した空白はすべて詰める
       for (var i = 0; i < 2; i++) l = l.replace(re1, '$1');
       l = l.replace(re2, '$1').replace(re3, '$1');
+      // 桁区切りの後ろに入った空白（1, 800, 000円）を詰める
+      l = l.replace(/(\d),\s+(?=\d{3})/g, '$1,');
       return l;
     }).filter(function (l) { return l !== ''; }).join('\n');
   }
@@ -499,7 +501,7 @@
     });
   }
 
-  function pickChoice(field, text) {
+  function pickChoice(field, text, ocrLike) {
     var t = str(text);
     var marked = [], present = [];
     field.options.forEach(function (o) {
@@ -509,11 +511,12 @@
       if (idx < 0) return;
       present.push(o);
       var before = st.slice(Math.max(0, idx - 2), idx);
-      if (new RegExp('[' + CHECK_MARKS + ']').test(before.slice(-1)) || /[■☑☒✓✔●◉]/.test(before)) marked.push(o);
+      // 画像の読み取りでは ■ が「画」「回」などに読み違えられることがあるので、選択肢の直前の1文字に限って印とみなす
+      if (new RegExp('[' + CHECK_MARKS + ']').test(before.slice(-1)) || /[■☑☒✓✔●◉]/.test(before) || (ocrLike && /[画回團國圖]/.test(before.slice(-1)))) marked.push(o);
     });
     if (marked.length === 1) return marked[0];
     if (marked.length > 1) return '';
-    var hasBoxes = new RegExp('[' + UNCHECK_MARKS + ']').test(t);
+    var hasBoxes = new RegExp('[' + UNCHECK_MARKS + ']').test(t) || (ocrLike && /[口ロ]/.test(t));
     if (present.length === 1 && !hasBoxes) return present[0];
     return '';
   }
@@ -523,7 +526,8 @@
    * lines: 文字列の配列（PDFは1行ずつ、画像は読み取り結果）
    * 戻り値：{ values: {欄id: 候補}, found: {欄id: 見つかった行}, attachmentsMarked: [添付id] }
    */
-  function extractCandidates(t, lines) {
+  function extractCandidates(t, lines, opts) {
+    opts = opts || {};
     var labelList = [];
     t.fields.forEach(function (f) {
       [f.name].concat(f.aliases || []).forEach(function (n) {
@@ -555,7 +559,7 @@
         }
         var f = findField(t, L.fieldId);
         if (f.format === 'choice') {
-          var c = pickChoice(f, v);
+          var c = pickChoice(f, v, opts.ocr);
           if (!c && v !== '') { values[f.id] = ''; found[f.id] = lines[lineNo]; continue; }
           v = c;
         } else if (f.format === 'presence') {
@@ -619,6 +623,54 @@
     }).filter(function (l) { return l.trim() !== ''; });
   }
 
+  /**
+   * 画像の読み取りの前処理：表の罫線（長い横線・縦線）を白で消す。
+   * gray: 濃淡（0=黒〜255=白）の配列。その場で書き換える。
+   * 罫線が残ると、文字の行が図として扱われて読み取れないことがあるため。
+   */
+  function removeRuledLines(gray, w, h) {
+    var TH = 128;
+    var minH = Math.max(40, Math.round(w * 0.05));
+    var minV = Math.max(40, Math.round(h * 0.03));
+    var x, y, start;
+    var mask = new Uint8Array(w * h);
+    for (y = 0; y < h; y++) {
+      start = -1;
+      for (x = 0; x <= w; x++) {
+        var dark = x < w && gray[y * w + x] < TH;
+        if (dark && start < 0) start = x;
+        if (!dark && start >= 0) {
+          if (x - start >= minH) for (var k = start; k < x; k++) mask[y * w + k] = 1;
+          start = -1;
+        }
+      }
+    }
+    for (x = 0; x < w; x++) {
+      start = -1;
+      for (y = 0; y <= h; y++) {
+        var dk = y < h && gray[y * w + x] < TH;
+        if (dk && start < 0) start = y;
+        if (!dk && start >= 0) {
+          if (y - start >= minV) for (var j = start; j < y; j++) mask[j * w + x] = 1;
+          start = -1;
+        }
+      }
+    }
+    var n = 0;
+    for (var i = 0; i < mask.length; i++) {
+      if (mask[i]) {
+        n++;
+        // 線の縁のにじみも消す（上下左右1画素）
+        gray[i] = 255;
+        if (i - w >= 0 && gray[i - w] < 200) gray[i - w] = 255;
+        if (i + w < gray.length && gray[i + w] < 200) gray[i + w] = 255;
+        if (i % w > 0 && gray[i - 1] < 200) gray[i - 1] = 255;
+        if (i % w < w - 1 && gray[i + 1] < 200) gray[i + 1] = 255;
+      }
+    }
+    return n;
+  }
+
   /* ---------- AI（候補を補う。確定は職員） ---------- */
 
   function buildAiMessages(t, text, missingIds) {
@@ -667,7 +719,7 @@
     parseDate: parseDate, checkValue: checkValue, attachmentNeeded: attachmentNeeded, evaluate: evaluate,
     displayValue: displayValue, attachmentStatusLabel: attachmentStatusLabel,
     toCsv: toCsv, settingsToRows: settingsToRows, resultToRows: resultToRows,
-    tidyOcrText: tidyOcrText, extractCandidates: extractCandidates, itemsToLines: itemsToLines,
+    tidyOcrText: tidyOcrText, removeRuledLines: removeRuledLines, extractCandidates: extractCandidates, itemsToLines: itemsToLines,
     buildAiMessages: buildAiMessages, parseAiAnswer: parseAiAnswer
   };
 });

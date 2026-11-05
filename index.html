@@ -39,7 +39,7 @@
       <p id="check-empty-settings" class="msg warn" hidden>申請の種類が登録されていません。「確認項目の設定」で登録するか、下の見本で試してください。</p>
       <details id="sample-details">
         <summary>見本で試す（架空のデータ）</summary>
-        <p class="muted">見本の申請の種類（3種類）と、記載漏れのある例・そろっている例を、ボタン1つで試せます。「値を入れる」は申請書の値を入れた状態に、「PDFを取り込む」は見本の申請書PDFから候補を入れる操作を試します。</p>
+        <p class="muted">見本の申請の種類（3種類）と、記載漏れのある例・そろっている例を、ボタン1つで試せます。「値を入れる」は申請書の値を入れた状態に、「PDFを取り込む」は見本の申請書PDFから、「画像を読み取る」はスキャン画像に見立てた見本から、候補を入れる操作を試します。</p>
         <div id="sample-buttons" class="sample-grid"></div>
       </details>
       <div id="check-msg" class="msg" role="status" aria-live="polite"></div>
@@ -55,7 +55,7 @@
             <input type="file" id="import-file" accept=".pdf,application/pdf,.png,.jpg,.jpeg,image/png,image/jpeg" class="sr-only">
           </div>
           <p class="muted">欄名を手がかりに値の候補を入れます。入った値は候補です。申請書と見比べて、直してから確定してください。ファイルはこのPCの中だけで読み、どこにも送りません。</p>
-          <!--OCRNOTE-->
+          <p class="msg warn" id="ocr-note">画像（PNG・JPEG）からの読み取りは、活字でも読み違いがあり、手書きの文字は読み取れないことが多くあります。読み取った値は候補です。必ず申請書と見比べて確定してください。初回は部品の読み込みに数十秒かかり、読み取り中は画面が動きません。</p>
           <p class="muted">見本の申請書PDFは samples フォルダにあります（架空のものです）。</p>
           <div id="import-msg" class="msg" role="status" aria-live="polite"></div>
           <div id="import-text-box" hidden>
@@ -238,6 +238,7 @@
 <script src="js/import-ui.js?v=20261105-1"></script>
 <script src="js/ai.js?v=20261105-1"></script>
 <script src="js/print.js?v=20261105-1"></script>
+<script src="js/ocr.js?v=20261105-1"></script>
 <script src="js/app.js?v=20261105-1"></script>
 </body>
 </html>

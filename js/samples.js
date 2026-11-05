@@ -98,7 +98,7 @@
       received: { 'h-a1': true, 'h-a2': true, 'h-a5': true }
     },
     {
-      id: 'hojokin-ok', typeId: 'sample-hojokin', label: '補助金の交付申請：そろっている例', pdf: 'hojokin-ok',
+      id: 'hojokin-ok', typeId: 'sample-hojokin', label: '補助金の交付申請：そろっている例', pdf: 'hojokin-ok', image: 'hojokin-ok-scan',
       values: {
         'h-date': '令和8年10月1日', 'h-kubun': '法人', 'h-hojinno': '1234567890123', 'h-jigyosha': true, 'h-daihyo': true,
         'h-zip': '123-4567', 'h-addr': true, 'h-tel': '03-1234-5678', 'h-jigyomei': '生産ラインの省力化設備の導入',
