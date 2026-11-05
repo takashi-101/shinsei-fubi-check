@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>申請書類 記載漏れ・添付漏れ確認ツール</title>
+<link rel="stylesheet" href="css/style.css?v=20261105-1">
+</head>
+<body>
+<header class="app-header">
+  <h1>申請書類 記載漏れ・添付漏れ確認ツール</h1>
+  <p class="lead">受け付けた申請書の記載漏れ・書式の誤り・添付書類の不足を、受付の時点で下確認します。入力した申請書の内容はこのPCの外に出ず、画面を閉じると消えます。</p>
+  <nav class="tabs" role="tablist" aria-label="画面の切り替え">
+    <button type="button" role="tab" data-tab="settings" aria-controls="panel-settings">確認項目の設定</button>
+    <button type="button" role="tab" data-tab="help" aria-controls="panel-help">使い方・データの扱い</button>
+  </nav>
+</header>
+
+<main>
+  <!-- 確認項目の設定 -->
+  <section id="panel-settings" class="panel" role="tabpanel" aria-label="確認項目の設定">
+    <div class="card">
+      <h2>確認項目の設定</h2>
+      <p>申請の種類ごとに、必須の欄・欄の書式・必要な添付書類を登録します。設定はこのブラウザに保存されます（申請書の内容は保存されません）。</p>
+      <div class="btns">
+        <button type="button" id="btn-add-type" class="primary">申請の種類を追加</button>
+        <button type="button" id="btn-load-samples">見本の設定を読み込む</button>
+        <button type="button" id="btn-export-json">設定をJSONで書き出す</button>
+        <label class="btn" for="file-import-replace">JSONを読み込む（置き換え）</label>
+        <input type="file" id="file-import-replace" accept=".json,application/json" class="sr-only">
+        <label class="btn" for="file-import-merge">JSONを追加で取り込む</label>
+        <input type="file" id="file-import-merge" accept=".json,application/json" class="sr-only">
+        <button type="button" id="btn-export-csv">設定をCSVで書き出す</button>
+      </div>
+      <div id="settings-msg" class="msg" role="status" aria-live="polite"></div>
+    </div>
+
+    <div class="settings-layout">
+      <div class="card">
+        <h3>申請の種類</h3>
+        <ul id="type-list" class="type-list"></ul>
+      </div>
+      <div>
+        <div id="type-editor-empty" class="card"><p class="empty-note">左の一覧から申請の種類を選ぶか、「申請の種類を追加」を押してください。</p></div>
+        <div id="type-editor" class="card" hidden>
+          <div class="row">
+            <label class="stack grow">申請の種類の名前<input type="text" id="type-name"></label>
+            <span id="settings-dirty" class="dirty-badge" hidden>保存していない変更があります</span>
+          </div>
+          <label class="stack">メモ（所管の係、根拠の要綱など）<input type="text" id="type-note"></label>
+          <ul id="type-problems" class="problems" aria-live="polite"></ul>
+
+          <h3>欄（必須の欄と書式）</h3>
+          <div id="field-list"></div>
+          <div class="btns"><button type="button" id="btn-add-field">欄を追加</button></div>
+
+          <h3>添付書類</h3>
+          <div id="att-list"></div>
+          <div class="btns"><button type="button" id="btn-add-att">添付書類を追加</button></div>
+
+          <div class="btns">
+            <button type="button" id="btn-save-type" class="primary">この申請の種類を保存</button>
+            <button type="button" id="btn-revert-type">変更を取り消す</button>
+            <button type="button" id="btn-copy-type">複製して新しく作る</button>
+            <button type="button" id="btn-delete-type" class="danger">この申請の種類を削除</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 使い方 -->
+  <section id="panel-help" class="panel help" role="tabpanel" aria-label="使い方・データの扱い" hidden>
+    <div class="card">
+      <h2>使い方</h2>
+      <ol>
+        <li>「確認項目の設定」で、申請の種類ごとに必須の欄・書式・添付書類を登録します。まず「見本の設定を読み込む」で架空の見本3種類を入れて、形を確かめられます。</li>
+        <li>設定はJSONで書き出して、係内のほかのPCで読み込めます。</li>
+      </ol>
+      <h2>データの扱い</h2>
+      <ul>
+        <li>このブラウザに保存するのは、確認項目の設定だけです。</li>
+        <li>書き出したファイルは、使っている人がPCに保存したものです。取り扱いは各課の規程に従ってください。</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<div id="print-area" aria-hidden="true"></div>
+
+<script src="js/core.js?v=20261105-1"></script>
+<script src="js/samples.js?v=20261105-1"></script>
+<script src="js/store.js?v=20261105-1"></script>
+<script src="js/settings-ui.js?v=20261105-1"></script>
+<script src="js/app.js?v=20261105-1"></script>
+</body>
+</html>
