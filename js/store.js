@@ -29,7 +29,8 @@
       return write(KEY, JSON.stringify(settings));
     },
     loadAi: function () {
-      var d = { mode: 'ollama', ollamaUrl: 'http://localhost:11434', ollamaModel: '', apiUrl: '', apiModel: '' };
+      // 既定はこのPCのLM Studio（OpenAI互換の窓口）
+      var d = { mode: 'api', ollamaUrl: 'http://localhost:11434', ollamaModel: '', apiUrl: 'http://localhost:1234/v1', apiModel: '' };
       var raw = read(AI_KEY);
       if (raw) { try { var o = JSON.parse(raw); Object.keys(d).forEach(function (k) { if (typeof o[k] === 'string') d[k] = o[k]; }); } catch (e) { /* 読めないときは既定 */ } }
       return d;

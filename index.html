@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>申請書類 記載漏れ・添付漏れ確認ツール</title>
-<script>window.APP_VERSION = '20261105-1';</script>
-<link rel="stylesheet" href="css/style.css?v=20261105-1">
+<script>window.APP_VERSION = '20261105-2';</script>
+<link rel="stylesheet" href="css/style.css?v=20261105-2">
 </head>
 <body>
 <header class="app-header">
@@ -159,8 +159,8 @@
       <div class="row">
         <label class="stack grow">AIの使い方
           <select id="ai-mode">
-            <option value="ollama">このPCのOllamaを使う（既定）</option>
-            <option value="api">外部のAPI（OpenAI互換）を使う</option>
+            <option value="api">OpenAI互換の窓口を使う（既定：このPCのLM Studio）</option>
+            <option value="ollama">このPCのOllamaを使う</option>
             <option value="off">AIを使わない</option>
           </select>
         </label>
@@ -175,11 +175,14 @@
         <p class="muted">Ollamaは、このPCの中で動くAIです。申請書の文字はPCの外に出ません。設定の手順は「使い方・データの扱い」にあります。</p>
       </div>
       <div id="ai-api-box" hidden>
-        <p class="msg warn">外部のAPIを使うと、申請書から取り出した文字（個人情報を含む）が外部へ送られます。所属の規程で認められている場合だけ使ってください。送る前に毎回確認が出ます。</p>
+        <p id="ai-api-local-note" class="muted">接続先は、このPCの中で動くAI（既定はLM Studio の <code>http://localhost:1234/v1</code>）です。申請書の文字はPCの外に出ず、料金もかかりません。APIキーは要りません。設定の手順は「使い方・データの扱い」にあります。</p>
+        <p id="ai-api-external-note" class="msg warn" hidden>接続先がこのPCの外になっています。外部のサービスを使うと、申請書から取り出した文字（個人情報を含む）が外部へ送られ、サービスによっては料金がかかります。所属の規程で認められている場合だけ使ってください。送る前に毎回確認が出ます。</p>
         <div class="row">
-          <label class="stack grow">接続先（例：https://api.example.com/v1）<input type="url" id="ai-api-url" autocomplete="off"></label>
-          <label class="stack grow">モデル名<input type="text" id="ai-api-model" autocomplete="off"></label>
-          <label class="stack grow">APIキー（保存しません）<input type="password" id="ai-api-key" autocomplete="off"></label>
+          <label class="stack grow">接続先<input type="url" id="ai-api-url" autocomplete="off" placeholder="http://localhost:1234/v1"></label>
+          <label class="stack grow">モデル名<input type="text" id="ai-api-model" list="api-models" autocomplete="off" placeholder="例：qwen3.5-4b"></label>
+          <datalist id="api-models"></datalist>
+          <label class="stack grow">APIキー（外部のサービスを使うときだけ。保存しません）<input type="password" id="ai-api-key" autocomplete="off"></label>
+          <button type="button" id="btn-ai-api-test">接続を試す</button>
         </div>
       </div>
       <div id="ai-settings-msg" class="msg" role="status" aria-live="polite"></div>
@@ -196,7 +199,7 @@
         <li><strong>確認作業</strong>：申請の種類を選び、申請書を見ながら値を入れ、受け取った添付書類に印を付けて「確認する」を押します。結果は「要確認」「添付不足」「確認済み」に分かれ、要確認には理由が出ます。値を直すと結果もすぐ変わります。</li>
         <li><strong>PDFから候補を入れる</strong>：文字を選べるPDF（電子申請・パソコンで作った申請書）を「申請書ファイルから候補を入れる」に落とすと、欄名を手がかりに値の候補が黄色で入ります。申請書と見比べ、「この値で確定」か「候補をすべて確定」を押します。未確定の候補は要確認として扱います。</li>
         <li><strong>画像から読み取る</strong>：スキャンした申請書（PNG・JPEG）も落とせます。手書きの文字は読み取れないことが多く、活字でも読み違いがあります。必ず申請書と見比べてください。</li>
-        <li><strong>AIで候補を補う（任意）</strong>：取り込んだあと、欄名で見つからなかった欄の候補をAIに出させます。既定はこのPCのOllamaです。設定は「確認項目の設定」の画面の下にあります。</li>
+        <li><strong>AIで候補を補う（任意）</strong>：取り込んだあと、欄名で見つからなかった欄の候補をAIに出させます。既定はこのPCのLM Studio（OpenAI互換の窓口）で、このPCのOllamaも選べます。設定は「確認項目の設定」の画面の下にあります。</li>
         <li><strong>記録</strong>：「確認結果票を印刷（A4）」で、確認者・審査者の押印欄のある票を印刷します。CSV・JSONでも書き出せます。</li>
       </ol>
       <h2>書式の種類</h2>
@@ -214,10 +217,17 @@
         <li>入力した申請書の内容は、ブラウザに保存しません。画面を閉じると消えます。書き出さずに閉じようとすると確認が出ます。</li>
         <li>このブラウザに保存するのは、確認項目の設定と、AIの接続先（URLとモデル名）だけです。外部のAPIのキーは保存しません。</li>
         <li>取り込んだPDF・画像は、このPCの中で読み、どこにも送りません。</li>
-        <li>外部のAPIを選んだときだけ、申請書から取り出した文字が外部へ送られます。送る前に毎回確認が出ます。</li>
+        <li>OpenAI互換の窓口の接続先を、使う人がこのPCの外（外部のサービス）に変えたときだけ、申請書から取り出した文字が外部へ送られます。送る前に毎回確認が出ます。</li>
         <li>書き出したファイルは、使っている人がPCに保存したものです。取り扱いは各課の規程に従ってください。</li>
       </ul>
-      <h2>Ollamaの設定（AIを使う場合）</h2>
+      <h2>LM Studioの設定（AIを使う場合・既定）</h2>
+      <ol>
+        <li>LM Studioを入れ、モデルを入れます（例：<code>qwen3.5-4b</code>。メモリ16GBのPCで動きます）。</li>
+        <li>LM Studioの「Developer」の画面でサーバーを起動し、「Enable CORS」（ブラウザからの接続を許す設定）をオンにします。コマンドなら <code>lms server start --cors</code> です。</li>
+        <li>「確認項目の設定」の画面の下で、接続先（既定 <code>http://localhost:1234/v1</code>）のまま「接続を試す」を押し、モデル名を選びます。</li>
+        <li>ネットにつながったPCでは、使い終わったらサーバーを止めてください（コマンドなら <code>lms server stop</code>）。</li>
+      </ol>
+      <h2>Ollamaの設定（Ollamaを使う場合）</h2>
       <ol>
         <li>Ollamaを入れ、モデルを入れます（例：<code>ollama pull qwen2.5:7b</code>）。</li>
         <li>ブラウザからの接続を許すため、環境変数 <code>OLLAMA_ORIGINS</code> を設定してOllamaを起動し直します（Windowsの例：PowerShellで <code>setx OLLAMA_ORIGINS "*"</code>）。</li>
@@ -230,15 +240,15 @@
 
 <div id="print-area" aria-hidden="true"></div>
 
-<script src="js/core.js?v=20261105-1"></script>
-<script src="js/samples.js?v=20261105-1"></script>
-<script src="js/store.js?v=20261105-1"></script>
-<script src="js/settings-ui.js?v=20261105-1"></script>
-<script src="js/check-ui.js?v=20261105-1"></script>
-<script src="js/import-ui.js?v=20261105-1"></script>
-<script src="js/ai.js?v=20261105-1"></script>
-<script src="js/print.js?v=20261105-1"></script>
-<script src="js/ocr.js?v=20261105-1"></script>
-<script src="js/app.js?v=20261105-1"></script>
+<script src="js/core.js?v=20261105-2"></script>
+<script src="js/samples.js?v=20261105-2"></script>
+<script src="js/store.js?v=20261105-2"></script>
+<script src="js/settings-ui.js?v=20261105-2"></script>
+<script src="js/check-ui.js?v=20261105-2"></script>
+<script src="js/import-ui.js?v=20261105-2"></script>
+<script src="js/ai.js?v=20261105-2"></script>
+<script src="js/print.js?v=20261105-2"></script>
+<script src="js/ocr.js?v=20261105-2"></script>
+<script src="js/app.js?v=20261105-2"></script>
 </body>
 </html>
