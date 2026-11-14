@@ -110,6 +110,13 @@ sh tools/make-sample-image.sh
 | tesseract.js（呼び出し方の参考にした本体。コードは同梱していない） | 7.0.0 | — | Apache License 2.0（`vendor/tesseract/LICENSE-tesseract.js.md`） |
 | 日本語の学習データ（jpn.traineddata、4.0.0_best_int） | @tesseract.js-data/jpn 1.0.0 | `vendor/tesseract/jpn-traineddata.js` | 元データ tesseract-ocr/tessdata_best は Apache License 2.0（`vendor/tesseract/LICENSE-tessdata_best`）。配布パッケージの package.json の表記は MIT |
 
+## 根拠（学習）
+
+| 機能 | 裏付けになる学習（発行元・名称・発行日） | 照会先（Credly） |
+|---|---|---|
+| AI（Ollama）で取り込んだ文字から欄の候補を補う（任意） | Coursera（認定：IBM）「Develop Generative AI Applications: Get Started」2026年11月1日 | https://www.credly.com/badges/b0634d1e-bbc1-4355-98eb-2094f43b8fee |
+| データがPCの外に出ない作り | Amazon Web Services Training and Certification「AWS Knowledge: Security Champion - Training Badge」2025年11月10日 | https://www.credly.com/badges/ddab077d-58eb-4807-bec1-69e5c6aeb9a5 |
+
 ## ライセンス
 
 MIT License（`LICENSE`）
