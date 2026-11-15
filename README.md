@@ -82,10 +82,12 @@ CSSとJavaScriptのURLには `?v=20261105-1` のような版の印を付けて�
 
 ## テスト
 
-Node.js（22以降）とPlaywrightが使える環境で、リポジトリの直下で実行します。
+Node.js（22以降）が入った環境で、リポジトリの直下で実行します（Playwright の版は `package.json` で固定しています）。
 
 ```bash
-node --test test/*.test.js
+npm install
+npx playwright install chromium
+npm test
 ```
 
 AI（Ollama、外部のAPI）は、応答の形をまねた仮のサーバーで確かめています。本物のOllama・外部のAPIでの確認は、使う人の環境で行ってください。

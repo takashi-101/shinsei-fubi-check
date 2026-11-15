@@ -1,0 +1,11 @@
+{
+  "name": "shinsei-fubi-check",
+  "private": true,
+  "description": "申請書の不備チェックツールの画面テスト（Playwright）",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}
